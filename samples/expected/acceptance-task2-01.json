@@ -1,0 +1,31 @@
+{
+  "task": 2,
+  "input_assets": [
+    "workflow-raw-01.md",
+    "workflow-template-01.md",
+    "workflow-reference-01.txt"
+  ],
+  "collection": {
+    "asset_count": 3,
+    "candidate_count": 2,
+    "collected_only_count": 1,
+    "usage_note_coverage_ratio": 1.0
+  },
+  "items": [
+    {
+      "source_category": "raw",
+      "usage_note": "background reference",
+      "is_candidate": false
+    },
+    {
+      "source_category": "template",
+      "usage_note": "structure template",
+      "is_candidate": true
+    },
+    {
+      "source_category": "reference",
+      "usage_note": "history reference",
+      "is_candidate": true
+    }
+  ]
+}

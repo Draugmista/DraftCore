@@ -55,6 +55,11 @@
 
 - 验证“不是代码看起来对”，而是用户场景真的能走通
 
+当前落地状态：
+
+- 已补齐任务 1、任务 2 的验收场景，放在 `tests/e2e/`
+- 任务 3 至任务 6 的验收场景待对应功能落地后继续补齐
+
 ## 4. 样例驱动测试要求
 
 解析器和工作流测试都应尽量基于固定样例素材。
@@ -187,7 +192,20 @@
 - 如何判断成功
 - 哪些情况必须判失败
 
-## 8. 测试目录建议
+当前已落地场景：
+
+1. `tests/e2e/test_task_acceptance.py::test_task1_acceptance_project_scope`
+2. `tests/e2e/test_task_acceptance.py::test_task2_acceptance_collection_context`
+
+当前对应样例资产：
+
+- `samples/assets/workflow-raw-01.md`
+- `samples/assets/workflow-template-01.md`
+- `samples/assets/workflow-reference-01.txt`
+- `samples/expected/acceptance-task1-01.json`
+- `samples/expected/acceptance-task2-01.json`
+
+## 8. 测试目录约定
 
 ```text
 tests/
@@ -201,7 +219,8 @@ samples/
 
 补充说明：
 
-- `tests/` 和 `samples/` 根目录可以先保留为空目录
+- 当前仓库已实际使用 `tests/unit`、`tests/integration`、`tests/e2e`
+- `samples/expected/` 同时承载解析器级期望文件和场景级验收期望文件
 - 样例文件的命名、映射和降级表达方式统一遵循 [样例约定](sample-conventions.md)
 
 ## 9. 执行建议
@@ -212,6 +231,7 @@ samples/
 pytest
 pytest tests/unit
 pytest tests/integration
+pytest tests/e2e
 ```
 
 如果后续补充覆盖率统计，可增加：

@@ -1,0 +1,20 @@
+{
+  "task": 1,
+  "input_assets": [
+    "workflow-raw-01.md",
+    "workflow-template-01.md",
+    "workflow-reference-01.txt"
+  ],
+  "project": {
+    "target_output": "markdown",
+    "status": "active"
+  },
+  "project_scope": {
+    "asset_count": 3,
+    "source_categories": [
+      "raw",
+      "template",
+      "reference"
+    ]
+  }
+}

@@ -33,7 +33,7 @@ samples/
 - `samples/assets/`：原始输入样例，按素材类型或场景组织
 - `samples/expected/`：与输入样例对应的期望结果，使用文本或结构化文件表达
 
-在目录真正开始填充前，允许先保留空目录。
+在目录真正开始填充前，允许先保留空目录；当前仓库已经开始实际使用这两个目录。
 
 ## 4. 命名约定
 
@@ -95,6 +95,12 @@ samples/
 - 测试通过文件主名进行匹配
 - 同一输入如需多个断言视角，可追加后缀
 
+对于端到端验收场景，允许使用“多输入样例 + 一个场景期望文件”的组织方式：
+
+- 输入样例仍放在 `samples/assets/`
+- 场景级期望文件放在 `samples/expected/`
+- 场景期望文件应显式写出涉及哪些输入样例，以及关键验收断言
+
 例如：
 
 ```text
@@ -104,6 +110,16 @@ samples/expected/parser-docx-partial-01.degraded.md
 ```
 
 这样可以让解析结果断言和降级说明断言分开维护。
+
+端到端场景示例：
+
+```text
+samples/assets/workflow-raw-01.md
+samples/assets/workflow-template-01.md
+samples/assets/workflow-reference-01.txt
+samples/expected/acceptance-task1-01.json
+samples/expected/acceptance-task2-01.json
+```
 
 ## 8. 分层使用建议
 
@@ -123,6 +139,15 @@ samples/expected/parser-docx-partial-01.degraded.md
 4. 至少 1 组 `pptx` 文本抽取样例
 5. 至少 1 组模板或历史成果样例
 6. 与上述样例一一对应的 `expected/` 文件
+
+当前已落地最小集合：
+
+1. `workflow-raw-01.md` 与对应解析期望
+2. `workflow-template-01.md` 与对应解析期望
+3. `workflow-reference-01.txt` 与对应解析期望
+4. `workflow-image-01.png` 与对应解析期望
+5. `acceptance-task1-01.json` 用于任务 1 验收
+6. `acceptance-task2-01.json` 用于任务 2 验收
 
 ## 10. 验收标准
 
