@@ -6,7 +6,13 @@ from typing import Optional
 from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
 
-from draftcore.app.models.enums import FileType, IngestionStatus, ProjectStatus, SourceCategory
+from draftcore.app.models.enums import (
+    FileType,
+    IngestionStatus,
+    ProjectStatus,
+    ReuseCandidateType,
+    SourceCategory,
+)
 
 
 def utc_now() -> datetime:
@@ -81,6 +87,19 @@ class AssetCollectionItem(SQLModel, table=True):
     asset_id: int = Field(foreign_key="assets.id", primary_key=True)
     usage_note: str
     is_candidate: bool = Field(default=False, index=True)
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class ReuseCandidate(SQLModel, table=True):
+    __tablename__ = "reuse_candidates"
+
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="report_projects.id", index=True)
+    asset_id: int = Field(foreign_key="assets.id", index=True)
+    candidate_type: ReuseCandidateType = Field(index=True)
+    snippet: str
+    reason: str
+    score_hint: int = Field(default=0, index=True)
     created_at: datetime = Field(default_factory=utc_now)
 
 

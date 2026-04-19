@@ -7,6 +7,7 @@ from draftcore.app.models.entities import (
     AssetContentProfile,
     AssetWithProfile,
     ProjectAsset,
+    ReuseCandidate,
     ReportProject,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "AssetContentProfile",
     "AssetWithProfile",
     "ProjectAsset",
+    "ReuseCandidate",
     "ReportProject",
 ]

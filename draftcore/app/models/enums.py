@@ -32,6 +32,14 @@ class IngestionStatus(StrEnum):
     FAILED = "failed"
 
 
+class ReuseCandidateType(StrEnum):
+    STRUCTURE = "structure"
+    SECTION = "section"
+    PARAGRAPH = "paragraph"
+    EXPRESSION = "expression"
+    PATH_REFERENCE = "path_reference"
+
+
 class OutputFormat(StrEnum):
     MARKDOWN = "markdown"
     DOCX = "docx"
