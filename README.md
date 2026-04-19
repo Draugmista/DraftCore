@@ -19,9 +19,9 @@ DraftCore 是一个面向个人报告工作流的本地 CLI 工具。
 - 已完成阶段任务拆解
 - 已完成总体架构与技术选型
 - 已完成第一版实现骨架说明与基础工程搭建
-- 已落地 `project`、`asset`、`collection`、`reuse`、`draft create/show/update` 的最小 CLI/服务/模型闭环
-- 已补充任务 1、任务 2、任务 4、任务 5 的端到端验收场景，以及任务 3、任务 4、任务 5 的单元测试与集成测试
-- 任务 6 仍处于待实现状态
+- 已落地 `project`、`asset`、`collection`、`reuse`、`draft create/show/update`、`export render`、`archive finalize/show` 的最小 CLI/服务/模型闭环
+- 已补充任务 1、任务 2、任务 4、任务 5、任务 6 的端到端验收场景，以及任务 3、任务 4、任务 5、任务 6 的单元测试与集成测试
+- 当前六个 MVP 任务均已有可运行代码与自动化测试覆盖
 
 ## 文档导航
 
@@ -90,6 +90,6 @@ draftcore/
 
 当前建议按以下顺序继续推进：
 
-1. 继续推进任务 6 的 `export`、`archive` 最小闭环
-2. 补齐任务 6 对应单测、集成测试和验收场景
-3. 持续同步 README、CLI 规格、Schema、测试文档，避免实现与约定脱节
+1. 继续围绕任务 6 之后的复用闭环做稳定性验证
+2. 保持 README、CLI 规格、Schema、测试文档与实现同步
+3. 在不突破 MVP 边界的前提下，再评估下一批最小增量任务

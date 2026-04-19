@@ -59,7 +59,8 @@
 
 - 已补齐任务 1、任务 2、任务 4 的验收场景，放在 `tests/e2e/`
 - 已补齐任务 5 的验收场景，放在 `tests/e2e/`
-- 任务 3、任务 6 的验收场景待对应功能落地后继续补齐
+- 已补齐任务 6 的验收场景，放在 `tests/e2e/`
+- 任务 3 的验收场景待对应功能进一步补齐
 
 ## 4. 样例驱动测试要求
 
@@ -199,6 +200,7 @@
 2. `tests/e2e/test_task_acceptance.py::test_task2_acceptance_collection_context`
 3. `tests/e2e/test_task_acceptance.py::test_task4_acceptance_main_draft_generation`
 4. `tests/e2e/test_task_acceptance.py::test_task5_acceptance_main_draft_update`
+5. `tests/e2e/test_task_acceptance.py::test_task6_acceptance_final_report_archive`
 
 当前对应样例资产：
 
@@ -210,6 +212,7 @@
 - `samples/expected/acceptance-task2-01.json`
 - `samples/expected/acceptance-task4-01.json`
 - `samples/expected/acceptance-task5-01.json`
+- `samples/expected/acceptance-task6-01.json`
 
 ## 8. 测试目录约定
 

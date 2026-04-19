@@ -385,11 +385,12 @@ python -m draftcore.app.cli <group> <command> [options]
 
 - `--draft-id`
 - `--format`
-- `--output-path`
+- `--output-path`（可选）
 
 第一版约束：
 
 - `format` 仅支持 `markdown`
+- 未显式传入 `--output-path` 时，默认写入配置中的 `output_dir`
 
 最小成功输出：
 
@@ -408,8 +409,13 @@ python -m draftcore.app.cli <group> <command> [options]
 
 - `--project-id`
 - `--draft-id`
-- `--output-path`
+- `--output-path`（可选）
 - `--name`
+
+第一版约束：
+
+- 一份主草稿只允许完成一次正式归档
+- 未显式传入 `--output-path` 时，默认写入配置中的 `output_dir`
 
 最小成功输出：
 
@@ -427,6 +433,11 @@ python -m draftcore.app.cli <group> <command> [options]
 
 - `--report-id`
 - `--project-id`
+
+第一版约束：
+
+- `--report-id` 与 `--project-id` 二选一
+- 使用 `--project-id` 时，返回该项目最新一次归档结果与追溯关系
 
 ## 5. 输出风格建议
 

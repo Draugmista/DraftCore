@@ -1,0 +1,29 @@
+{
+  "task": 6,
+  "input_assets": [
+    "workflow-raw-01.md",
+    "workflow-template-01.md",
+    "workflow-reference-01.txt"
+  ],
+  "final_report": {
+    "output_format": "markdown",
+    "asset_ref_count": 3,
+    "reuse_ref_count": 2
+  },
+  "asset_ref_categories": [
+    "raw",
+    "template",
+    "reference"
+  ],
+  "reuse_ref_categories": [
+    "template",
+    "reference"
+  ],
+  "project": {
+    "draft_status": "archived",
+    "final_report_status": "archived"
+  },
+  "reingest": {
+    "source_category": "reference"
+  }
+}

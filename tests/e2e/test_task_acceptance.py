@@ -25,6 +25,10 @@ def _db_path(name: str) -> Path:
     return (Path.cwd() / ".test-db" / f"{name}-{uuid4().hex}.db").resolve()
 
 
+def _output_dir(name: str) -> Path:
+    return (Path.cwd() / ".test-output" / f"{name}-{uuid4().hex}").resolve()
+
+
 def _create_project(db_path: Path) -> int:
     create_result = runner.invoke(
         app,
@@ -370,3 +374,159 @@ def test_task5_acceptance_main_draft_update() -> None:
     assert update_payload["updated_section_count"] == expected["draft"]["updated_section_count"]
     assert show_payload["last_revision"]["changed_sections"] == expected["changed_sections"]
     assert show_payload["status"] == expected["draft"]["status"]
+
+
+def test_task6_acceptance_final_report_archive() -> None:
+    expected = _expected("acceptance-task6-01.json")
+    db_path = _db_path("e2e-task6")
+    output_dir = _output_dir("e2e-task6")
+
+    project_id = _create_project(db_path)
+    _add_assets(db_path, project_id)
+
+    build_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "collection",
+            "build",
+            "--project-id",
+            str(project_id),
+            "--name",
+            "Q2 Inputs",
+            "--purpose",
+            "Review candidate inputs",
+        ],
+    )
+    assert build_result.exit_code == 0, build_result.stdout
+
+    reuse_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "reuse",
+            "find",
+            "--project-id",
+            str(project_id),
+        ],
+    )
+    assert reuse_result.exit_code == 0, reuse_result.stdout
+
+    create_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "draft",
+            "create",
+            "--project-id",
+            str(project_id),
+        ],
+    )
+    assert create_result.exit_code == 0, create_result.stdout
+    draft_id = _payload(create_result)["id"]
+
+    update_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "draft",
+            "update",
+            "--draft-id",
+            str(draft_id),
+            "--instructions",
+            "整理已有内容并统一表达",
+        ],
+    )
+    assert update_result.exit_code == 0, update_result.stdout
+
+    finalize_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--output-dir",
+            str(output_dir),
+            "--json",
+            "archive",
+            "finalize",
+            "--project-id",
+            str(project_id),
+            "--draft-id",
+            str(draft_id),
+            "--name",
+            "Quarterly Review Final",
+        ],
+    )
+    assert finalize_result.exit_code == 0, finalize_result.stdout
+    finalize_payload = _payload(finalize_result)
+
+    show_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "archive",
+            "show",
+            "--project-id",
+            str(project_id),
+        ],
+    )
+    assert show_result.exit_code == 0, show_result.stdout
+    show_payload = _payload(show_result)
+
+    add_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "asset",
+            "add",
+            "--project-id",
+            str(project_id),
+            "--path",
+            finalize_payload["output_path"],
+            "--source-category",
+            "reference",
+            "--usage-note",
+            "archived report for reuse",
+        ],
+    )
+    assert add_result.exit_code == 0, add_result.stdout
+    add_payload = _payload(add_result)
+
+    project_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "project",
+            "show",
+            "--project-id",
+            str(project_id),
+        ],
+    )
+    assert project_result.exit_code == 0, project_result.stdout
+    project_payload = _payload(project_result)
+
+    assert finalize_payload["output_format"] == expected["final_report"]["output_format"]
+    assert finalize_payload["asset_ref_count"] == expected["final_report"]["asset_ref_count"]
+    assert finalize_payload["reuse_ref_count"] == expected["final_report"]["reuse_ref_count"]
+    assert Path(finalize_payload["output_path"]).exists()
+    assert show_payload["id"] == finalize_payload["id"]
+    assert [item["source_category"] for item in show_payload["asset_refs"]] == expected["asset_ref_categories"]
+    assert [item["source_category"] for item in show_payload["reuse_refs"]] == expected["reuse_ref_categories"]
+    assert project_payload["draft_status"] == expected["project"]["draft_status"]
+    assert project_payload["final_report_status"] == expected["project"]["final_report_status"]
+    assert add_payload["source_category"] == expected["reingest"]["source_category"]
+    assert Path(add_payload["path"]).resolve() == Path(finalize_payload["output_path"]).resolve()

@@ -149,6 +149,8 @@ samples/expected/acceptance-task2-01.json
 5. `acceptance-task1-01.json` 用于任务 1 验收
 6. `acceptance-task2-01.json` 用于任务 2 验收
 7. `acceptance-task4-01.json` 用于任务 4 验收
+8. `acceptance-task5-01.json` 用于任务 5 验收
+9. `acceptance-task6-01.json` 用于任务 6 验收
 
 ## 10. 验收标准
 

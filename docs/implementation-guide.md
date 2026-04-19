@@ -120,6 +120,7 @@ draftcore/
 
 - 将结构化草稿渲染为目标格式文件
 - 第一版默认目标为 Markdown
+- `--output-path` 可省略，省略时默认写入 `output_dir`
 
 ### 3.7 `archive`
 
@@ -132,6 +133,7 @@ draftcore/
 
 - 将主草稿转为最终报告
 - 保存归档记录和来源追溯关系
+- `archive show --project-id` 默认查看该项目最新一次归档结果
 
 ## 4. 核心数据对象
 
@@ -282,6 +284,10 @@ draftcore/
 - `output_format`
 - `output_path`
 - `archived_at`
+
+说明：
+
+- 第一版一份主草稿只允许完成一次正式归档
 
 ## 5. 关键关系约束
 

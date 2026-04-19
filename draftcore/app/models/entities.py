@@ -136,6 +136,33 @@ class DraftReuseRef(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utc_now)
 
 
+class FinalReport(SQLModel, table=True):
+    __tablename__ = "final_reports"
+
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="report_projects.id", index=True)
+    draft_id: int = Field(foreign_key="drafts.id", unique=True, index=True)
+    name: str
+    output_format: str = Field(index=True)
+    output_path: str
+    archived_at: datetime = Field(default_factory=utc_now, index=True)
+
+
+class FinalReportAssetRef(SQLModel, table=True):
+    __tablename__ = "final_report_asset_refs"
+
+    final_report_id: int = Field(foreign_key="final_reports.id", primary_key=True)
+    asset_id: int = Field(foreign_key="assets.id", primary_key=True)
+    ref_role: str
+
+
+class FinalReportReuseRef(SQLModel, table=True):
+    __tablename__ = "final_report_reuse_refs"
+
+    final_report_id: int = Field(foreign_key="final_reports.id", primary_key=True)
+    reuse_candidate_id: int = Field(foreign_key="reuse_candidates.id", primary_key=True)
+
+
 class AssetWithProfile(SQLModel):
     asset: Asset
     profile: Optional[AssetContentProfile] = None

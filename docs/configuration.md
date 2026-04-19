@@ -64,6 +64,7 @@ level = "INFO"
 - `output_dir`
   - 默认导出目录
   - `export render` 和 `archive finalize` 默认写入这里
+  - 未显式传入 `--output-path` 时，会自动在该目录下生成 Markdown 输出文件
 
 ### 5.2 `[database]`
 

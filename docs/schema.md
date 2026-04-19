@@ -321,7 +321,13 @@
 
 - `project_id` 外键指向 `report_projects.id`
 - `draft_id` 外键指向 `drafts.id`
+- `draft_id` 在第一版正式归档语义下应保持唯一
 - `output_path` 非空
+
+说明：
+
+- 第一版采用“一份主草稿只生成一份正式终稿”的归档语义
+- 最终报告文件可以再次作为 `reference` 素材重新登记，形成最小复用闭环
 
 ## 3.12 `final_report_asset_refs`
 
