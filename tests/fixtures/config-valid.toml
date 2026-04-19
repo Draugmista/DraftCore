@@ -1,0 +1,6 @@
+[workspace]
+output_dir = "./configured-output"
+
+[database]
+path = "./configured.db"
+echo = true

@@ -9,9 +9,26 @@ class ProjectStatus(StrEnum):
     ARCHIVED = "archived"
 
 
+class FileType(StrEnum):
+    MD = "md"
+    TXT = "txt"
+    DOCX = "docx"
+    PPTX = "pptx"
+    IMAGE = "image"
+    XLSX = "xlsx"
+    UNKNOWN = "unknown"
+
+
+class SourceCategory(StrEnum):
+    RAW = "raw"
+    TEMPLATE = "template"
+    REFERENCE = "reference"
+
+
 class IngestionStatus(StrEnum):
     PENDING = "pending"
-    READY = "ready"
+    PARSED = "parsed"
+    PARTIAL = "partial"
     FAILED = "failed"
 
 
