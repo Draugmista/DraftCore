@@ -3,10 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import JSON, Column, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 from draftcore.app.models.enums import (
+    DraftStatus,
     FileType,
     IngestionStatus,
     ProjectStatus,
@@ -100,6 +101,38 @@ class ReuseCandidate(SQLModel, table=True):
     snippet: str
     reason: str
     score_hint: int = Field(default=0, index=True)
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class Draft(SQLModel, table=True):
+    __tablename__ = "drafts"
+    __table_args__ = (UniqueConstraint("project_id", name="uq_drafts_project_id"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="report_projects.id", index=True)
+    name: str
+    version_label: str = Field(default="v1")
+    status: DraftStatus = Field(default=DraftStatus.DRAFT, index=True)
+    content_model: dict[str, object] = Field(sa_column=Column(JSON, nullable=False))
+    source_snapshot: dict[str, object] = Field(sa_column=Column(JSON, nullable=False))
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
+
+
+class DraftAssetRef(SQLModel, table=True):
+    __tablename__ = "draft_asset_refs"
+
+    draft_id: int = Field(foreign_key="drafts.id", primary_key=True)
+    asset_id: int = Field(foreign_key="assets.id", primary_key=True)
+    ref_type: str
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class DraftReuseRef(SQLModel, table=True):
+    __tablename__ = "draft_reuse_refs"
+
+    draft_id: int = Field(foreign_key="drafts.id", primary_key=True)
+    reuse_candidate_id: int = Field(foreign_key="reuse_candidates.id", primary_key=True)
     created_at: datetime = Field(default_factory=utc_now)
 
 

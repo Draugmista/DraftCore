@@ -294,12 +294,21 @@ python -m draftcore.app.cli <group> <command> [options]
 - 草稿名称
 - 章节数
 - 生成模式
+- 素材引用数
+- 复用引用数
 
 生成模式建议区分：
 
 - `ai`
 - `template`
 - `manual-fallback`
+
+当前 MVP 约束：
+
+- 每个项目只允许一个主草稿；若草稿已存在，`draft create` 应失败
+- 当前实现只读取项目最新一批 `reuse_candidates`
+- 若项目下集合不唯一且未传 `--collection-id`，命令应失败
+- 若尚未执行 `reuse find`，命令应失败并提示先准备复用结果
 
 ### `draft update`
 
@@ -328,6 +337,13 @@ python -m draftcore.app.cli <group> <command> [options]
 建议参数：
 
 - `--draft-id`
+
+最小成功输出：
+
+- 草稿元数据
+- 结构化章节与文本块
+- 来源快照摘要
+- 素材引用数与复用引用数
 
 ## 4.6 `export`
 

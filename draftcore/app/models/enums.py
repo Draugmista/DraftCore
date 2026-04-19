@@ -40,6 +40,12 @@ class ReuseCandidateType(StrEnum):
     PATH_REFERENCE = "path_reference"
 
 
+class DraftStatus(StrEnum):
+    DRAFT = "draft"
+    READY = "ready"
+    ARCHIVED = "archived"
+
+
 class OutputFormat(StrEnum):
     MARKDOWN = "markdown"
     DOCX = "docx"

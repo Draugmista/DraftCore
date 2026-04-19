@@ -1,0 +1,23 @@
+{
+  "task": 4,
+  "input_assets": [
+    "workflow-raw-01.md",
+    "workflow-template-01.md",
+    "workflow-reference-01.txt"
+  ],
+  "draft": {
+    "section_count": 3,
+    "generation_mode": "template",
+    "asset_ref_count": 3,
+    "reuse_ref_count": 2
+  },
+  "section_headings": [
+    "Template Opening",
+    "Background",
+    "背景与目标"
+  ],
+  "reuse_ref_categories": [
+    "template",
+    "reference"
+  ]
+}

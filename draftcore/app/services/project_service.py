@@ -4,10 +4,14 @@ from sqlmodel import func, select
 
 from draftcore.app.models import Asset, ProjectAsset, ReportProject
 from draftcore.app.models.enums import OutputFormat, ProjectStatus
+from draftcore.app.services.draft_service import DraftService
 from draftcore.app.services.errors import NotFoundError, ValidationError
 
 
 class ProjectService:
+    def __init__(self) -> None:
+        self.draft_service = DraftService()
+
     def create_project(
         self,
         session,
@@ -67,6 +71,6 @@ class ProjectService:
             "created_at": project.created_at,
             "updated_at": project.updated_at,
             "asset_count": asset_count,
-            "draft_status": "not_started",
+            "draft_status": self.draft_service.get_project_draft_status(session, project_id),
             "final_report_status": "not_archived",
         }

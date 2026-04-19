@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import typer
 
-from draftcore.app.cli.support import emit, scaffold_notice
+from draftcore.app.cli.support import emit, get_settings, handle_error
+from draftcore.app.db import session_scope
+from draftcore.app.services import DraftService
 
 app = typer.Typer(help="Create, update, and inspect drafts.")
+draft_service = DraftService()
 
 
 @app.command("create")
@@ -19,17 +22,19 @@ def create_draft(
     ),
     title: str | None = typer.Option(None, "--title", help="Draft title."),
 ) -> None:
-    emit(
-        ctx,
-        "Draft create",
-        {
-            "project_id": project_id,
-            "collection_id": collection_id or "-",
-            "reuse_from_latest": reuse_from_latest,
-            "title": title or "-",
-            **scaffold_notice("Draft create"),
-        },
-    )
+    try:
+        settings = get_settings(ctx)
+        with session_scope(settings) as session:
+            payload = draft_service.create_draft(
+                session,
+                project_id=project_id,
+                collection_id=collection_id,
+                title=title,
+            )
+        payload["reuse_from_latest"] = reuse_from_latest
+        emit(ctx, "Draft created", payload)
+    except Exception as exc:  # pragma: no cover - exercised in CLI tests
+        handle_error(exc)
 
 
 @app.command("update")
@@ -50,7 +55,8 @@ def update_draft(
             "draft_id": draft_id,
             "instructions": instructions,
             "use_latest_assets": use_latest_assets,
-            **scaffold_notice("Draft update"),
+            "status": "scaffolded",
+            "message": "Draft update is reserved for task 5.",
         },
     )
 
@@ -60,11 +66,10 @@ def show_draft(
     ctx: typer.Context,
     draft_id: int = typer.Option(..., "--draft-id", help="Draft identifier."),
 ) -> None:
-    emit(
-        ctx,
-        "Draft show",
-        {
-            "draft_id": draft_id,
-            **scaffold_notice("Draft show"),
-        },
-    )
+    try:
+        settings = get_settings(ctx)
+        with session_scope(settings) as session:
+            detail = draft_service.get_draft_detail(session, draft_id)
+        emit(ctx, "Draft detail", detail)
+    except Exception as exc:  # pragma: no cover - exercised in CLI tests
+        handle_error(exc)

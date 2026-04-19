@@ -170,3 +170,82 @@ def test_task2_acceptance_collection_context() -> None:
         }
         for item in show_payload["items"]
     ] == expected["items"]
+
+
+def test_task4_acceptance_main_draft_generation() -> None:
+    expected = _expected("acceptance-task4-01.json")
+    db_path = _db_path("e2e-task4")
+
+    project_id = _create_project(db_path)
+    _add_assets(db_path, project_id)
+
+    build_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "collection",
+            "build",
+            "--project-id",
+            str(project_id),
+            "--name",
+            "Q2 Inputs",
+            "--purpose",
+            "Review candidate inputs",
+        ],
+    )
+    assert build_result.exit_code == 0, build_result.stdout
+    collection_id = _payload(build_result)["id"]
+
+    reuse_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "reuse",
+            "find",
+            "--project-id",
+            str(project_id),
+        ],
+    )
+    assert reuse_result.exit_code == 0, reuse_result.stdout
+
+    create_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "draft",
+            "create",
+            "--project-id",
+            str(project_id),
+        ],
+    )
+    assert create_result.exit_code == 0, create_result.stdout
+    create_payload = _payload(create_result)
+
+    show_result = runner.invoke(
+        app,
+        [
+            "--db-path",
+            str(db_path),
+            "--json",
+            "draft",
+            "show",
+            "--draft-id",
+            str(create_payload["id"]),
+        ],
+    )
+    assert show_result.exit_code == 0, show_result.stdout
+    show_payload = _payload(show_result)
+
+    assert create_payload["section_count"] == expected["draft"]["section_count"]
+    assert create_payload["generation_mode"] == expected["draft"]["generation_mode"]
+    assert create_payload["asset_ref_count"] == expected["draft"]["asset_ref_count"]
+    assert create_payload["reuse_ref_count"] == expected["draft"]["reuse_ref_count"]
+    assert show_payload["source_snapshot"]["collection_id"] == collection_id
+    assert [section["heading"] for section in show_payload["content_model"]["sections"]] == expected["section_headings"]
+    assert [item["source_category"] for item in show_payload["reuse_refs"]] == expected["reuse_ref_categories"]

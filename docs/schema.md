@@ -246,6 +246,7 @@
 约束建议：
 
 - `project_id` 外键指向 `report_projects.id`
+- `project_id` 在第一版主草稿语义下应保持唯一
 - `content_model` 非空
 
 枚举建议：
@@ -258,7 +259,9 @@
 说明：
 
 - `content_model` 建议以 JSON 形式保存结构化章节和文本块
+- `content_model` 第一版至少包含 `title`、`generation_mode`、`sections`
 - `source_snapshot` 建议记录生成时使用过的素材和复用候选 ID
+- `source_snapshot` 第一版至少记录 `collection_id`、`asset_ids`、`reuse_candidate_ids`
 
 ## 3.9 `draft_asset_refs`
 
@@ -272,6 +275,10 @@
 - `asset_id`
 - `ref_type`
 - `created_at`
+
+第一版约定：
+
+- `ref_type` 先固定为 `context`，表示该素材已进入当前主草稿上下文
 
 ## 3.10 `draft_reuse_refs`
 
