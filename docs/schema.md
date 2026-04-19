@@ -136,6 +136,7 @@
 约束建议：
 
 - `project_id` 外键指向 `report_projects.id`
+- `project_id + name` 联合唯一
 
 ## 3.5 `asset_collection_items`
 
@@ -148,13 +149,23 @@
 - `collection_id`
 - `asset_id`
 - `usage_note`
-- `priority_hint`
 - `is_candidate`
 - `created_at`
 
 说明：
 
 - `is_candidate` 用于区分“已收集”和“更可能被使用”
+- `usage_note` 第一版必须落地为可展示文本，不允许整体留空
+- `usage_note` 填充优先级为 `project_assets.relation_note -> assets.usage_note -> 来源类别默认说明`
+- 第一版默认说明映射为：
+  - `raw -> background reference`
+  - `template -> structure template`
+  - `reference -> history reference`
+- `is_candidate` 第一版默认规则为：
+  - `template`、`reference` 直接标记为 `true`
+  - `raw` 仅在存在显式备注时标记为 `true`
+  - 其余情况保持 `false`
+- 集合刷新时允许删除旧快照并重建 `asset_collection_items`，避免同名集合持续堆积旧成员
 
 ## 3.6 `project_assets`
 

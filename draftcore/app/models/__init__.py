@@ -2,6 +2,8 @@
 
 from draftcore.app.models.entities import (
     Asset,
+    AssetCollection,
+    AssetCollectionItem,
     AssetContentProfile,
     AssetWithProfile,
     ProjectAsset,
@@ -10,6 +12,8 @@ from draftcore.app.models.entities import (
 
 __all__ = [
     "Asset",
+    "AssetCollection",
+    "AssetCollectionItem",
     "AssetContentProfile",
     "AssetWithProfile",
     "ProjectAsset",

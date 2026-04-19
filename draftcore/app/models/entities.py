@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 from draftcore.app.models.enums import FileType, IngestionStatus, ProjectStatus, SourceCategory
@@ -60,6 +61,27 @@ class ProjectAsset(SQLModel, table=True):
     asset_id: int = Field(foreign_key="assets.id", primary_key=True)
     relation_note: str | None = None
     linked_at: datetime = Field(default_factory=utc_now)
+
+
+class AssetCollection(SQLModel, table=True):
+    __tablename__ = "asset_collections"
+    __table_args__ = (UniqueConstraint("project_id", "name", name="uq_asset_collections_project_name"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: int = Field(foreign_key="report_projects.id", index=True)
+    name: str
+    purpose: str
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class AssetCollectionItem(SQLModel, table=True):
+    __tablename__ = "asset_collection_items"
+
+    collection_id: int = Field(foreign_key="asset_collections.id", primary_key=True)
+    asset_id: int = Field(foreign_key="assets.id", primary_key=True)
+    usage_note: str
+    is_candidate: bool = Field(default=False, index=True)
+    created_at: datetime = Field(default_factory=utc_now)
 
 
 class AssetWithProfile(SQLModel):

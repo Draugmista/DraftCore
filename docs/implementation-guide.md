@@ -81,7 +81,9 @@ draftcore/
 职责：
 
 - 围绕项目生成素材集合
-- 对素材集合执行用途标记和范围展示
+- 对素材集合执行用途标记和候选区分
+- 输出当前项目可查看的素材集合视图
+- 同一项目下同名集合按 create-or-refresh 处理，而不是累积多个近似集合
 
 ### 3.4 `reuse`
 
@@ -205,7 +207,29 @@ draftcore/
 - `purpose`
 - `created_at`
 
-### 4.5 `ReuseCandidate`
+说明：
+
+- 第一版按 `project_id + name` 约束集合唯一语义
+- `collection build` 重复执行时，允许刷新同名集合的成员快照与用途说明
+
+### 4.5 `AssetCollectionItem`
+
+表示素材集合中的具体成员项。
+
+最小字段：
+
+- `collection_id`
+- `asset_id`
+- `usage_note`
+- `is_candidate`
+- `created_at`
+
+说明：
+
+- `usage_note` 优先使用项目内备注，其次使用素材主档备注，最后降级到来源类别默认说明
+- `is_candidate` 用于区分“已收集素材”和“更可能被使用的素材”
+
+### 4.6 `ReuseCandidate`
 
 表示复用定位结果。
 
@@ -224,7 +248,7 @@ draftcore/
 
 - 第一版 `score_hint` 可以是简单排序依据，不要求复杂评分体系
 
-### 4.6 `Draft`
+### 4.7 `Draft`
 
 表示项目主草稿。
 
@@ -245,7 +269,7 @@ draftcore/
 - `content_model` 应保存结构化章节和文本块，而不是只保存 Markdown 文本
 - `source_snapshot` 用于记录生成或改写时引用过的素材和复用候选
 
-### 4.7 `FinalReport`
+### 4.8 `FinalReport`
 
 表示归档后的最终成果。
 
@@ -410,7 +434,9 @@ draftcore/
 ### 任务 2：素材归集与用途标记
 
 - 对应 `collection build`
-- 补充 `Asset.usage_note`
+- 自动生成集合项 `usage_note`
+- 自动区分 `is_candidate`
+- `collection show` 提供任务 3 可消费的输入上下文
 
 ### 任务 3：复用定位
 

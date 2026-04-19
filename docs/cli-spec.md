@@ -187,6 +187,7 @@ python -m draftcore.app.cli <group> <command> [options]
 用途：
 
 - 围绕项目建立素材集合
+- 以 `project_id + name` 做 create-or-refresh，输出当前项目可用输入上下文
 
 建议参数：
 
@@ -199,6 +200,21 @@ python -m draftcore.app.cli <group> <command> [options]
 - 集合 ID
 - 纳入素材数量
 - 用途说明覆盖情况
+- 候选素材数量
+
+行为约定：
+
+- 命令读取当前项目下全部已登记素材
+- 同一项目下同名集合重复执行时，刷新集合快照而不是累积重复项
+- 若项目下没有任何素材，命令失败
+- 用途说明优先级为 `project_assets.relation_note -> assets.usage_note -> 来源类别默认说明`
+- 第一版默认说明映射：
+  - `raw -> background reference`
+  - `template -> structure template`
+  - `reference -> history reference`
+- 候选区分规则：
+  - `template`、`reference` 默认进入候选
+  - `raw` 仅在存在显式备注时进入候选
 
 ### `collection show`
 
@@ -209,6 +225,13 @@ python -m draftcore.app.cli <group> <command> [options]
 建议参数：
 
 - `--collection-id`
+
+最小成功输出：
+
+- 集合基础信息，如 `id`、`project_id`、`name`、`purpose`
+- 汇总信息，如 `asset_count`、`candidate_count`、`collected_only_count`
+- `usage_note_coverage`
+- 素材明细项，至少包含 `asset_id`、`asset_name`、`source_category`、`usage_note`、`is_candidate`、`ingestion_status`
 
 ## 4.4 `reuse`
 
