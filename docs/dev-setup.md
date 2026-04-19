@@ -87,6 +87,8 @@ python -m venv .venv
 uv sync
 ```
 
+安装完成后，如果不想手动激活虚拟环境，也可以直接通过 `uv run` 执行开发命令。
+
 或：
 
 ```powershell
@@ -143,7 +145,7 @@ draftcore/
 
 ```powershell
 python -m draftcore.app.cli --help
-pytest
+uv run pytest
 ruff check .
 mypy draftcore
 ```
