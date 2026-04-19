@@ -262,6 +262,15 @@
 - `content_model` 第一版至少包含 `title`、`generation_mode`、`sections`
 - `source_snapshot` 建议记录生成时使用过的素材和复用候选 ID
 - `source_snapshot` 第一版至少记录 `collection_id`、`asset_ids`、`reuse_candidate_ids`
+- `source_snapshot.revision_history` 第一版用于保存最小修订轨迹，元素建议包含：
+  - `revision_index`
+  - `previous_version_label`
+  - `new_version_label`
+  - `instructions`
+  - `changed_sections`
+  - `assets_added`
+  - `change_summary`
+  - `updated_at`
 
 ## 3.9 `draft_asset_refs`
 

@@ -58,7 +58,8 @@
 当前落地状态：
 
 - 已补齐任务 1、任务 2、任务 4 的验收场景，放在 `tests/e2e/`
-- 任务 3、任务 5、任务 6 的验收场景待对应功能落地后继续补齐
+- 已补齐任务 5 的验收场景，放在 `tests/e2e/`
+- 任务 3、任务 6 的验收场景待对应功能落地后继续补齐
 
 ## 4. 样例驱动测试要求
 
@@ -197,15 +198,18 @@
 1. `tests/e2e/test_task_acceptance.py::test_task1_acceptance_project_scope`
 2. `tests/e2e/test_task_acceptance.py::test_task2_acceptance_collection_context`
 3. `tests/e2e/test_task_acceptance.py::test_task4_acceptance_main_draft_generation`
+4. `tests/e2e/test_task_acceptance.py::test_task5_acceptance_main_draft_update`
 
 当前对应样例资产：
 
 - `samples/assets/workflow-raw-01.md`
+- `samples/assets/workflow-raw-02.md`
 - `samples/assets/workflow-template-01.md`
 - `samples/assets/workflow-reference-01.txt`
 - `samples/expected/acceptance-task1-01.json`
 - `samples/expected/acceptance-task2-01.json`
 - `samples/expected/acceptance-task4-01.json`
+- `samples/expected/acceptance-task5-01.json`
 
 ## 8. 测试目录约定
 

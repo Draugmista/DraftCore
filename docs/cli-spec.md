@@ -328,6 +328,33 @@ python -m draftcore.app.cli <group> <command> [options]
 - 新版本标识
 - 更新摘要
 
+行为约定：
+
+- 始终更新同一条主草稿记录，不新建第二份草稿
+- `version_label` 按 `vN -> vN+1` 递增；若旧值不可解析，则按修订次数回退生成
+- 成功更新后，草稿状态进入 `ready`
+- `--use-latest-assets` 为真时，纳入当前项目中尚未进入草稿上下文的最新素材，并补写 `draft_asset_refs`
+- 更新结果至少返回：
+  - `id`
+  - `project_id`
+  - `name`
+  - `previous_version_label`
+  - `version_label`
+  - `status`
+  - `updated_section_count`
+  - `asset_ref_count`
+  - `assets_added_count`
+  - `change_summary`
+  - `changed_sections`
+  - `revision_count`
+  - `updated_at`
+
+失败条件：
+
+- 草稿不存在
+- `instructions` 为空
+- 草稿内容损坏，无法形成可编辑章节
+
 ### `draft show`
 
 用途：
@@ -344,6 +371,7 @@ python -m draftcore.app.cli <group> <command> [options]
 - 结构化章节与文本块
 - 来源快照摘要
 - 素材引用数与复用引用数
+- 修订次数与最近一次修订摘要
 
 ## 4.6 `export`
 

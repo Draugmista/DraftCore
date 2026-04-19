@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from copy import deepcopy
 
 from sqlmodel import select
 
@@ -12,6 +13,7 @@ from draftcore.app.models import (
     Draft,
     DraftAssetRef,
     DraftReuseRef,
+    ProjectAsset,
     ReuseCandidate,
     ReportProject,
 )
@@ -87,6 +89,113 @@ class DraftService:
         session.commit()
         return self.get_draft_detail(session, draft.id)
 
+    def update_draft(
+        self,
+        session,
+        *,
+        draft_id: int,
+        instructions: str,
+        use_latest_assets: bool = False,
+    ) -> dict[str, object]:
+        draft = session.get(Draft, draft_id)
+        if draft is None:
+            raise NotFoundError(f"Draft {draft_id} does not exist.")
+
+        normalized_instructions = instructions.strip()
+        if not normalized_instructions:
+            raise ValidationError("Draft update instructions cannot be empty.")
+
+        content_model = self._validate_editable_content_model(draft)
+        current_sections = list(content_model["sections"])
+        previous_version_label = draft.version_label
+        revision_history = self._load_revision_history(draft.source_snapshot)
+
+        assets_to_add = []
+        if use_latest_assets:
+            collection_id = draft.source_snapshot.get("collection_id")
+            assets_to_add = self._load_latest_project_assets(
+                session,
+                project_id=draft.project_id,
+                draft_id=draft.id,
+                collection_id=collection_id if isinstance(collection_id, int) else None,
+            )
+
+        rewrite_flags = self._parse_instruction_flags(normalized_instructions)
+        updated_sections, changed_sections = self._rewrite_sections(
+            sections=current_sections,
+            rewrite_flags=rewrite_flags,
+            new_assets=assets_to_add,
+        )
+        if not updated_sections:
+            raise ValidationError(f"Draft {draft_id} has no editable sections.")
+
+        new_version_label = self._next_version_label(previous_version_label, len(revision_history))
+        updated_at = utc_now()
+        assets_added = [asset.id for asset, _, _ in assets_to_add]
+        change_summary = self._build_change_summary(
+            previous_version_label=previous_version_label,
+            new_version_label=new_version_label,
+            changed_sections=changed_sections,
+            assets_added=assets_added,
+            rewrite_flags=rewrite_flags,
+        )
+
+        content_model["sections"] = updated_sections
+        draft.content_model = content_model
+        draft.version_label = new_version_label
+        draft.status = DraftStatus.READY
+        draft.updated_at = updated_at
+
+        source_snapshot = dict(draft.source_snapshot)
+        source_snapshot["asset_ids"] = self._merge_ids(
+            source_snapshot.get("asset_ids"),
+            assets_added,
+        )
+        revision_history.append(
+            {
+                "revision_index": len(revision_history) + 1,
+                "previous_version_label": previous_version_label,
+                "new_version_label": new_version_label,
+                "instructions": normalized_instructions,
+                "changed_sections": changed_sections,
+                "assets_added": assets_added,
+                "change_summary": change_summary,
+                "updated_at": updated_at.isoformat(),
+            }
+        )
+        source_snapshot["revision_history"] = revision_history
+        draft.source_snapshot = source_snapshot
+        session.add(draft)
+
+        for asset, _, _ in assets_to_add:
+            session.add(
+                DraftAssetRef(
+                    draft_id=draft.id,
+                    asset_id=asset.id,
+                    ref_type="context",
+                )
+            )
+
+        session.commit()
+        session.refresh(draft)
+
+        detail = self.get_draft_detail(session, draft.id)
+        return {
+            "id": detail["id"],
+            "project_id": detail["project_id"],
+            "name": detail["name"],
+            "version_label": detail["version_label"],
+            "previous_version_label": previous_version_label,
+            "status": detail["status"],
+            "updated_section_count": len(changed_sections),
+            "asset_ref_count": detail["asset_ref_count"],
+            "assets_added_count": len(assets_added),
+            "change_summary": change_summary,
+            "changed_sections": changed_sections,
+            "revision_count": detail["revision_count"],
+            "updated_at": detail["updated_at"],
+        }
+
     def get_draft_detail(self, session, draft_id: int) -> dict[str, object]:
         draft = session.get(Draft, draft_id)
         if draft is None:
@@ -113,6 +222,7 @@ class DraftService:
         content_model = draft.content_model
         sections = list(content_model.get("sections", [])) if isinstance(content_model, dict) else []
         generation_mode = content_model.get("generation_mode") if isinstance(content_model, dict) else None
+        revision_history = self._load_revision_history(draft.source_snapshot)
 
         return {
             "id": draft.id,
@@ -124,6 +234,8 @@ class DraftService:
             "section_count": len(sections),
             "content_model": content_model,
             "source_snapshot": draft.source_snapshot,
+            "revision_count": len(revision_history),
+            "last_revision": revision_history[-1] if revision_history else None,
             "asset_ref_count": len(asset_refs),
             "reuse_ref_count": len(reuse_refs),
             "asset_refs": [
@@ -337,6 +449,7 @@ class DraftService:
             "collection_id": collection.id,
             "asset_ids": asset_ids,
             "reuse_candidate_ids": reuse_candidate_ids,
+            "revision_history": [],
             "generation_mode": generation_mode,
             "generated_at": utc_now().isoformat(),
         }
@@ -346,6 +459,297 @@ class DraftService:
             "sections": sections,
         }
         return content_model, snapshot
+
+    def _validate_editable_content_model(self, draft: Draft) -> dict[str, object]:
+        content_model = deepcopy(draft.content_model)
+        if not isinstance(content_model, dict):
+            raise ValidationError(f"Draft {draft.id} content is not editable.")
+        sections = content_model.get("sections")
+        if not isinstance(sections, list) or not sections:
+            raise ValidationError(f"Draft {draft.id} has no editable sections.")
+        return content_model
+
+    def _load_revision_history(self, source_snapshot: dict[str, object]) -> list[dict[str, object]]:
+        history = source_snapshot.get("revision_history", [])
+        if not isinstance(history, list):
+            return []
+        return [dict(item) for item in history if isinstance(item, dict)]
+
+    def _load_latest_project_assets(
+        self,
+        session,
+        *,
+        project_id: int,
+        draft_id: int,
+        collection_id: int | None,
+    ) -> list[tuple[Asset, AssetContentProfile | None, str | None]]:
+        existing_asset_ids = {
+            ref.asset_id
+            for ref in session.exec(select(DraftAssetRef).where(DraftAssetRef.draft_id == draft_id)).all()
+        }
+        statement = (
+            select(ProjectAsset, Asset, AssetContentProfile)
+            .join(Asset, onclause=ProjectAsset.asset_id == Asset.id)
+            .outerjoin(AssetContentProfile, onclause=AssetContentProfile.asset_id == Asset.id)
+            .where(ProjectAsset.project_id == project_id)
+            .order_by(Asset.created_at.asc(), Asset.id.asc())
+        )
+        assets: list[tuple[Asset, AssetContentProfile | None, str | None]] = []
+        for project_asset, asset, profile in session.exec(statement).all():
+            if asset.id in existing_asset_ids:
+                continue
+            usage_note = project_asset.relation_note
+            if collection_id is not None:
+                collection_item = session.get(AssetCollectionItem, (collection_id, asset.id))
+                if collection_item is not None and collection_item.usage_note.strip():
+                    usage_note = collection_item.usage_note
+            assets.append((asset, profile, usage_note))
+        return assets
+
+    def _parse_instruction_flags(self, instructions: str) -> dict[str, bool]:
+        lowered = instructions.lower()
+        supplement = any(keyword in instructions for keyword in ["补充", "新增"]) or any(
+            keyword in lowered for keyword in ["supplement", "add"]
+        )
+        consolidate = any(keyword in instructions for keyword in ["合并", "整理"]) or any(
+            keyword in lowered for keyword in ["merge", "consolidate"]
+        )
+        polish = any(keyword in instructions for keyword in ["统一", "改写", "精简"]) or any(
+            keyword in lowered for keyword in ["rewrite", "polish", "trim", "unify"]
+        )
+        no_keywords = not any([supplement, consolidate, polish])
+        return {
+            "supplement": supplement or no_keywords,
+            "consolidate": consolidate,
+            "polish": polish,
+        }
+
+    def _rewrite_sections(
+        self,
+        *,
+        sections: list[dict[str, object]],
+        rewrite_flags: dict[str, bool],
+        new_assets: list[tuple[Asset, AssetContentProfile | None, str | None]],
+    ) -> tuple[list[dict[str, object]], list[str]]:
+        updated_sections: list[dict[str, object]] = []
+        changed_sections: list[str] = []
+        for section in sections:
+            normalized_section = self._normalize_section(
+                section=section,
+                consolidate=rewrite_flags["consolidate"],
+                polish=rewrite_flags["polish"],
+            )
+            updated_sections.append(normalized_section)
+            if normalized_section != section:
+                heading = str(normalized_section.get("heading", ""))
+                if heading and heading not in changed_sections:
+                    changed_sections.append(heading)
+
+        if rewrite_flags["supplement"] and new_assets and updated_sections:
+            target_index = len(updated_sections) - 1
+            target_section = updated_sections[target_index]
+            target_blocks = list(target_section.get("blocks", []))
+            target_blocks.append(self._build_asset_supplement_block(new_assets))
+            target_section["blocks"] = target_blocks
+            updated_sections[target_index] = target_section
+            heading = str(target_section.get("heading", ""))
+            if heading and heading not in changed_sections:
+                changed_sections.append(heading)
+
+        return updated_sections, changed_sections
+
+    def _normalize_section(
+        self,
+        *,
+        section: dict[str, object],
+        consolidate: bool,
+        polish: bool,
+    ) -> dict[str, object]:
+        normalized = {
+            "heading": section.get("heading"),
+            "blocks": [],
+        }
+        raw_blocks = section.get("blocks", [])
+        if not isinstance(raw_blocks, list):
+            return normalized
+
+        dedupe_keys: set[tuple[str, str, tuple[int, ...], tuple[int, ...]]] = set()
+        for raw_block in raw_blocks:
+            if not isinstance(raw_block, dict):
+                continue
+            block_type = str(raw_block.get("type", "text"))
+            text = self._normalize_block_text(
+                str(raw_block.get("text", "")),
+                polish=polish,
+            )
+            if not text:
+                continue
+            source_refs = self._normalize_source_refs(raw_block.get("source_refs"))
+            block = {
+                "type": block_type,
+                "text": text,
+                "source_refs": source_refs,
+            }
+            previous = normalized["blocks"][-1] if normalized["blocks"] else None
+            if previous and previous["type"] == block_type and previous["source_refs"] == source_refs:
+                previous["text"] = self._merge_block_text(previous["text"], text)
+                continue
+            dedupe_key = (
+                block_type,
+                text,
+                tuple(source_refs["asset_ids"]),
+                tuple(source_refs["reuse_candidate_ids"]),
+            )
+            if dedupe_key in dedupe_keys:
+                continue
+            dedupe_keys.add(dedupe_key)
+            normalized["blocks"].append(block)
+
+        if consolidate and len(normalized["blocks"]) > 1:
+            normalized["blocks"] = [self._collapse_section_blocks(normalized["blocks"], polish=polish)]
+        return normalized
+
+    def _normalize_block_text(self, text: str, *, polish: bool) -> str:
+        lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        cleaned_lines: list[str] = []
+        seen_lines: set[str] = set()
+        previous_blank = False
+        for raw_line in lines:
+            line = " ".join(raw_line.strip().split())
+            if polish and (
+                "请在任务 5 中继续补充细节" in line
+                or "task 5" in line.lower()
+            ):
+                continue
+            if not line:
+                if previous_blank:
+                    continue
+                cleaned_lines.append("")
+                previous_blank = True
+                continue
+            previous_blank = False
+            dedupe_key = line.lower()
+            if dedupe_key in seen_lines:
+                continue
+            seen_lines.add(dedupe_key)
+            cleaned_lines.append(line)
+
+        while cleaned_lines and cleaned_lines[0] == "":
+            cleaned_lines.pop(0)
+        while cleaned_lines and cleaned_lines[-1] == "":
+            cleaned_lines.pop()
+        return "\n".join(cleaned_lines)
+
+    def _normalize_source_refs(self, source_refs: object) -> dict[str, list[int]]:
+        if not isinstance(source_refs, dict):
+            return {"asset_ids": [], "reuse_candidate_ids": []}
+        return {
+            "asset_ids": self._merge_ids(source_refs.get("asset_ids"), []),
+            "reuse_candidate_ids": self._merge_ids(source_refs.get("reuse_candidate_ids"), []),
+        }
+
+    def _merge_ids(self, base_ids: object, extra_ids: list[int]) -> list[int]:
+        merged: list[int] = []
+        for collection in [base_ids, extra_ids]:
+            values = collection if isinstance(collection, list) else []
+            for value in values:
+                if isinstance(value, int) and value not in merged:
+                    merged.append(value)
+        return merged
+
+    def _merge_block_text(self, left: str, right: str) -> str:
+        if left == right:
+            return left
+        return self._normalize_block_text(f"{left}\n\n{right}", polish=False)
+
+    def _collapse_section_blocks(
+        self,
+        blocks: list[dict[str, object]],
+        *,
+        polish: bool,
+    ) -> dict[str, object]:
+        merged_text = "\n\n".join(str(block.get("text", "")) for block in blocks if block.get("text"))
+        asset_ids: list[int] = []
+        reuse_candidate_ids: list[int] = []
+        for block in blocks:
+            source_refs = self._normalize_source_refs(block.get("source_refs"))
+            asset_ids = self._merge_ids(asset_ids, source_refs["asset_ids"])
+            reuse_candidate_ids = self._merge_ids(reuse_candidate_ids, source_refs["reuse_candidate_ids"])
+        return {
+            "type": "text",
+            "text": self._normalize_block_text(merged_text, polish=polish),
+            "source_refs": {
+                "asset_ids": asset_ids,
+                "reuse_candidate_ids": reuse_candidate_ids,
+            },
+        }
+
+    def _build_asset_supplement_block(
+        self,
+        new_assets: list[tuple[Asset, AssetContentProfile | None, str | None]],
+    ) -> dict[str, object]:
+        asset_ids = [asset.id for asset, _, _ in new_assets if asset.id is not None]
+        lines = []
+        for asset, profile, usage_note in new_assets:
+            detail = self._pick_asset_update_detail(asset=asset, profile=profile, usage_note=usage_note)
+            lines.append(f"- {asset.name}: {detail}")
+        return {
+            "type": "text",
+            "text": self._normalize_block_text("\n".join(lines), polish=False),
+            "source_refs": {
+                "asset_ids": asset_ids,
+                "reuse_candidate_ids": [],
+            },
+        }
+
+    def _pick_asset_update_detail(
+        self,
+        *,
+        asset: Asset,
+        profile: AssetContentProfile | None,
+        usage_note: str | None,
+    ) -> str:
+        candidates = [
+            profile.summary if profile else None,
+            profile.title if profile else None,
+            profile.structure_excerpt if profile else None,
+            usage_note,
+            asset.usage_note,
+            asset.name,
+        ]
+        for value in candidates:
+            if value and value.strip():
+                return value.strip()
+        return asset.name
+
+    def _next_version_label(self, current_label: str, revision_count: int) -> str:
+        match = re.fullmatch(r"v(\d+)", current_label.strip(), flags=re.IGNORECASE)
+        if match:
+            return f"v{int(match.group(1)) + 1}"
+        return f"v{revision_count + 2}"
+
+    def _build_change_summary(
+        self,
+        *,
+        previous_version_label: str,
+        new_version_label: str,
+        changed_sections: list[str],
+        assets_added: list[int],
+        rewrite_flags: dict[str, bool],
+    ) -> str:
+        applied_rules = ["normalize"]
+        if rewrite_flags["supplement"]:
+            applied_rules.append("supplement")
+        if rewrite_flags["consolidate"]:
+            applied_rules.append("consolidate")
+        if rewrite_flags["polish"]:
+            applied_rules.append("polish")
+        return (
+            f"Updated draft {previous_version_label} -> {new_version_label}; "
+            f"changed_sections={len(changed_sections)}; "
+            f"assets_added={len(assets_added)}; "
+            f"rules={','.join(applied_rules)}"
+        )
 
     def _extract_headings(self, snippet: str) -> list[str]:
         lines = [line.strip() for line in snippet.splitlines() if line.strip()]

@@ -48,17 +48,18 @@ def update_draft(
         help="Include the newest project assets in the update.",
     ),
 ) -> None:
-    emit(
-        ctx,
-        "Draft update",
-        {
-            "draft_id": draft_id,
-            "instructions": instructions,
-            "use_latest_assets": use_latest_assets,
-            "status": "scaffolded",
-            "message": "Draft update is reserved for task 5.",
-        },
-    )
+    try:
+        settings = get_settings(ctx)
+        with session_scope(settings) as session:
+            payload = draft_service.update_draft(
+                session,
+                draft_id=draft_id,
+                instructions=instructions,
+                use_latest_assets=use_latest_assets,
+            )
+        emit(ctx, "Draft updated", payload)
+    except Exception as exc:  # pragma: no cover - exercised in CLI tests
+        handle_error(exc)
 
 
 @app.command("show")
