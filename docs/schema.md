@@ -51,7 +51,6 @@
 - `source_category`
 - `topic_or_task`
 - `usage_note`
-- `is_used`
 - `ingestion_status`
 - `created_at`
 - `updated_at`
@@ -62,6 +61,13 @@
 - `file_type` 非空
 - `source_category` 非空
 - `path` 建议唯一
+
+拍板结论：
+
+- `assets` 表示全局素材主档，不直接挂 `project_id`
+- 同一物理文件按规范化绝对路径只登记一次
+- 是否被某个项目使用，不放在 `assets` 上，而放在项目关系表和后续引用表中表达
+- `source_category` 表示该素材的主业务属性，第一版先按素材主属性登记，不做“同一素材在不同项目下切换类别”的复杂建模
 
 枚举建议：
 
@@ -160,11 +166,21 @@
 
 - `project_id`
 - `asset_id`
+- `relation_note`
 - `linked_at`
+
+约束建议：
+
+- `project_id` 外键指向 `report_projects.id`
+- `asset_id` 外键指向 `assets.id`
+- `project_id + asset_id` 联合唯一
 
 说明：
 
-- 虽然第一版也可把 `project_id` 直接放在 `assets` 上，但若考虑素材可复用到多个项目，建议一开始就用关系表
+- 第一版明确使用关系表，不再把 `project_id` 直接放在 `assets` 上
+- 该表负责表达“这个素材已被纳入这个项目范围”
+- `relation_note` 只放项目内补充说明，例如“本项目中作为背景参考”或“本项目中作为结构模板”
+- 是否进入草稿或最终报告，不在本表强行记录，分别由 `draft_asset_refs` 和 `final_report_asset_refs` 追踪
 
 ## 3.7 `reuse_candidates`
 
@@ -305,10 +321,20 @@
 
 - 一个项目可关联多个素材
 - 一个项目可关联多个素材集合
+- 一个素材可被多个项目复用，前提是它在 `assets` 中只保留一条主档记录
 - 一个项目在第一版默认只有一个主草稿，但数据库设计可允许多个版本记录
 - 一个草稿可关联多个素材与多个复用候选
 - 一个最终报告必须追溯到其来源草稿
 - 一个最终报告必须能追溯到使用过的素材与复用候选
+
+关系落地顺序拍板如下：
+
+1. 素材先登记到 `assets`
+2. 项目纳入范围时写入 `project_assets`
+3. 围绕当前任务组织输入上下文时写入 `asset_collections` 和 `asset_collection_items`
+4. 真正进入草稿或终稿引用时，再写入 `draft_asset_refs` 或 `final_report_asset_refs`
+
+这样可以把“已登记”“已纳入项目”“更可能使用”“实际已使用”四层语义拆开，避免一个字段承载过多状态。
 
 ## 5. 建模建议
 

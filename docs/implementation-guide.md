@@ -162,7 +162,6 @@ draftcore/
 - `source_category`
 - `topic_or_task`
 - `usage_note`
-- `is_used`
 - `ingestion_status`
 - `created_at`
 - `updated_at`
@@ -171,6 +170,7 @@ draftcore/
 
 - `file_type` 负责表达 `md`、`docx`、`pptx`、图片等技术格式
 - `source_category` 负责表达原始素材、模板素材、参考成果等业务角色
+- `Asset` 是全局素材主档，不直接保存某个项目内的使用状态
 
 ### 4.3 `AssetContentProfile`
 

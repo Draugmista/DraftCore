@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "draftcore"
+version = "0.1.0"
+description = "A local-first CLI for personal report workflows."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "typer>=0.12,<1.0",
+  "sqlmodel>=0.0.22,<0.1",
+  "sqlalchemy>=2.0,<2.1",
+  "pydantic>=2.8,<3.0",
+  "python-docx>=1.1,<2.0",
+  "python-pptx>=1.0,<2.0",
+]
+
+[project.scripts]
+draftcore = "draftcore.app.cli:main"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.11,<2.0",
+  "pytest>=8.3,<9.0",
+  "pytest-cov>=5.0,<6.0",
+  "ruff>=0.6,<0.7",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+strict = false

@@ -1,0 +1,1 @@
+"""Configuration support for DraftCore."""

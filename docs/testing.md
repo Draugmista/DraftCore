@@ -63,6 +63,7 @@
 
 - `samples/assets/`
 - `samples/expected/`
+- 命名和映射规则见 [样例约定](sample-conventions.md)
 
 样例内容至少包含：
 
@@ -197,6 +198,11 @@ samples/
   assets/
   expected/
 ```
+
+补充说明：
+
+- `tests/` 和 `samples/` 根目录可以先保留为空目录
+- 样例文件的命名、映射和降级表达方式统一遵循 [样例约定](sample-conventions.md)
 
 ## 9. 执行建议
 

@@ -37,6 +37,7 @@ DraftCore 是一个面向个人报告工作流的本地 CLI 工具。
 9. [CLI 规格](docs/cli-spec.md)
 10. [数据模型](docs/schema.md)
 11. [测试策略](docs/testing.md)
+12. [样例约定](docs/sample-conventions.md)
 
 ## MVP 范围摘要
 
