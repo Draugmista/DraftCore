@@ -26,8 +26,8 @@ DraftCore 是一个面向个人报告工作流的本地 CLI 工具。
 
 建议按以下顺序阅读：
 
-1. [实施说明.md](/E:/MYcoede/DraftCore/实施说明.md)
-2. [阶段5任务清单.md](/E:/MYcoede/DraftCore/阶段5任务清单.md)
+1. [实施说明.md](实施说明.md)
+2. [阶段5任务清单.md](阶段5任务清单.md)
 3. [PRD-lite](docs/PRD-lite.md)
 4. [总体架构](docs/architecture.md)
 5. [技术选型 ADR](docs/adr/001-tech-stack.md)
@@ -55,7 +55,7 @@ DraftCore 是一个面向个人报告工作流的本地 CLI 工具。
 - ORM：SQLModel
 - 配置：TOML
 
-详细理由见 [docs/adr/001-tech-stack.md](/E:/MYcoede/DraftCore/docs/adr/001-tech-stack.md)。
+详细理由见 [docs/adr/001-tech-stack.md](docs/adr/001-tech-stack.md)。
 
 ## 建议目录结构
 
@@ -72,7 +72,7 @@ draftcore/
     ai/
 ```
 
-详细说明见 [docs/implementation-guide.md](/E:/MYcoede/DraftCore/docs/implementation-guide.md)。
+详细说明见 [docs/implementation-guide.md](docs/implementation-guide.md)。
 
 ## 开发启动前的最小检查项
 

@@ -9,7 +9,7 @@
 - 文件解析和导出接口怎么固定
 - 多类型素材如何支撑阶段 5 的六个任务
 
-本文默认遵循 [docs/architecture.md](/C:/Codefield/DraftCore/docs/architecture.md) 与 [docs/adr/001-tech-stack.md](/C:/Codefield/DraftCore/docs/adr/001-tech-stack.md)。
+本文默认遵循 [docs/architecture.md](./architecture.md) 与 [docs/adr/001-tech-stack.md](./adr/001-tech-stack.md)。
 
 ## 2. 第一版建议目录结构
 
